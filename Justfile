@@ -10,7 +10,7 @@ run: build
 
 dev-frontend:
 	@echo "Starting frontend in development mode..."
-	bun start
+	npm run start
 
 dev:
 	air
@@ -30,7 +30,7 @@ migrate:
 frontend:
 	@echo "Building frontend..."
 	if [ -d "node_modules" ]; then \
-		bun run build; \
+		npm run build; \
 	else \
 		echo "Frontend not set up yet, skipping..."; \
 	fi
@@ -41,4 +41,4 @@ deps:
 
 setup: deps
 	@echo "Installing frontend dependencies..."
-	bun install
+	npm install
