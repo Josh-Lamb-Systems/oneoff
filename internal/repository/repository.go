@@ -95,6 +95,9 @@ type Repository interface {
 	// Transaction support
 	WithTransaction(ctx context.Context, fn func(Repository) error) error
 
+	// Ping verifies the database connection is usable
+	Ping(ctx context.Context) error
+
 	// Close closes the database connection
 	Close() error
 }

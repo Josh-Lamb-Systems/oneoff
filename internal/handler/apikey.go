@@ -249,5 +249,5 @@ func respondError(w http.ResponseWriter, status int, message string) {
 func respondSuccess(w http.ResponseWriter, status int, data interface{}) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(status)
-	_ = json.NewEncoder(w).Encode(apiKeySuccessResponse{Data: data})
+	_ = json.NewEncoder(w).Encode(apiKeySuccessResponse{Data: emptyIfNilSlice(data)})
 }

@@ -1,0 +1,30 @@
+# OneOff behind a reverse proxy.
+#
+#   docker compose up -d
+#
+# The UI/API is published on 127.0.0.1:8080 only. Point your reverse proxy
+# (Caddy, Traefik, nginx, ...) at it and let the proxy handle TLS and login.
+# If the proxy runs in Docker, drop `ports:` and attach both services to a
+# shared network instead; the proxy then targets http://oneoff:8080.
+#
+# Note: shell jobs run inside this container as an unprivileged user. Anyone
+# who can reach the UI can run commands here, so keep it behind
+# authentication.
+
+services:
+  oneoff:
+    image: ghcr.io/josh-lamb-systems/oneoff:latest
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:8080:8080"
+    environment:
+      LOG_LEVEL: info
+      DEFAULT_TIMEZONE: UTC
+      LOG_RETENTION_DAYS: "90"
+      # WORKERS_COUNT: "2"
+      # AUTH_ENABLED: "true"
+    volumes:
+      - oneoff-data:/data
+
+volumes:
+  oneoff-data:

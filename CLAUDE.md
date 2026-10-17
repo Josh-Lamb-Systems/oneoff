@@ -321,7 +321,7 @@ landing-page/
 | --------------------------- | -------------------------- | -------------------------------- |
 | `urfave/cli/v3`             | CLI framework              | Command-line interface and flags |
 | `caarlos0/env/v11`          | Config parsing             | 12-factor app pattern, env vars  |
-| `mattn/go-sqlite3`          | SQLite driver              | CGO required for compilation     |
+| `modernc.org/sqlite` / `mattn/go-sqlite3` | SQLite driver | Via `meysam81/x/sqlite`: pure-Go modernc when `CGO_ENABLED=0` (release/image builds), mattn when CGO is on |
 | `golang-migrate/migrate/v4` | Schema migrations          | Automatic migration on startup   |
 | `rs/zerolog`                | Structured logging         | JSON logging, leveled output     |
 | `imroc/req/v3`              | HTTP client                | Retry logic for HTTP jobs        |
@@ -440,7 +440,17 @@ The project uses several development tools:
 - Builds for Linux, macOS, Windows (amd64, arm64, arm)
 - Cosign binary signing with SBOM generation
 - Automatic changelog from conventional commits
-- Docker image publishing to GHCR
+
+**Container Image** (`Dockerfile`, `docker` job in `.github/workflows/ci.yml`):
+- Multi-arch (amd64, arm64) image published to `ghcr.io/josh-lamb-systems/oneoff`
+- `edge` + `sha-<commit>` on every push to `main`; semver tags + `latest` when release-please cuts a release
+- Pull requests build the image without pushing
+- Alpine runtime with bash/curl/jq for shell jobs; no Docker CLI, so Docker jobs don't work in the image
+- `compose.yaml` is the reference deployment (behind a reverse proxy)
+
+**Package manager**: npm (`package-lock.json`). bun is no longer used.
+
+**Releases**: release-please uses `release-please-config.json` and `.release-please-manifest.json` (the fork has no upstream tags).
 
 ### Git Workflow
 
@@ -1331,7 +1341,8 @@ describe("Jobs Store", () => {
 ### Operational Concerns
 
 1. **Database Migrations**
-   - Migrations run automatically on server startup
+   - Migrations are embedded in the binary (`migrations/embed.go`) and run automatically on server startup
+   - A migration failure aborts startup
    - Always create both up and down migrations
    - Test migrations before deployment
 
@@ -1365,7 +1376,7 @@ describe("Jobs Store", () => {
 cgo: C compiler not found
 ```
 
-**Solution**: Install GCC/build tools
+**Solution**: Build with `CGO_ENABLED=0` (uses the pure-Go driver, as releases do), or install GCC/build tools
 
 ```bash
 # Ubuntu/Debian

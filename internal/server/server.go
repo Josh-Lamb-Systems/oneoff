@@ -7,7 +7,6 @@ import (
 	"io"
 	"io/fs"
 	"net/http"
-	"path/filepath"
 	"strings"
 	"time"
 
@@ -46,9 +45,9 @@ func New(ctx context.Context, cfg *config.Config) (*Server, error) {
 	}
 
 	// Run migrations
-	migrationsPath := filepath.Join(".", "migrations")
-	if err := repository.RunMigrations(ctx, cfg.DBPath, migrationsPath, "up"); err != nil {
-		logging.Warn().Err(err).Msg("Failed to run migrations (continuing anyway)")
+	if err := repository.RunMigrations(ctx, cfg.DBPath, "up"); err != nil {
+		_ = repo.Close()
+		return nil, fmt.Errorf("failed to run migrations: %w", err)
 	}
 
 	// Initialize job registry
@@ -105,7 +104,7 @@ func New(ctx context.Context, cfg *config.Config) (*Server, error) {
 
 	// Setup router
 	mux := http.NewServeMux()
-	setupRoutes(mux, h, apiKeyHandler, webhookHandler, chainHandler, metricsCollector)
+	setupRoutes(mux, repo, h, apiKeyHandler, webhookHandler, chainHandler, metricsCollector)
 
 	// Build middleware chain: CORS -> Logging -> Metrics -> Auth -> Handler
 	var finalHandler http.Handler = mux
@@ -188,12 +187,19 @@ func (s *Server) Shutdown(ctx context.Context) error {
 }
 
 // setupRoutes configures all HTTP routes
-func setupRoutes(mux *http.ServeMux, h *handler.Handler, apiKeyHandler *handler.APIKeyHandler, webhookHandler *handler.WebhookHandler, chainHandler *handler.ChainHandler, metricsCollector metrics.Collector) {
+func setupRoutes(mux *http.ServeMux, repo repository.Repository, h *handler.Handler, apiKeyHandler *handler.APIKeyHandler, webhookHandler *handler.WebhookHandler, chainHandler *handler.ChainHandler, metricsCollector metrics.Collector) {
 	// Metrics endpoint (no auth required for Prometheus scraping)
 	mux.Handle("/metrics", metricsCollector.Handler())
 
 	// Health check endpoint
 	mux.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
+		ctx, cancel := context.WithTimeout(r.Context(), 2*time.Second)
+		defer cancel()
+		if err := repo.Ping(ctx); err != nil {
+			logging.Error().Err(err).Msg("Health check failed")
+			http.Error(w, "database unavailable", http.StatusServiceUnavailable)
+			return
+		}
 		w.WriteHeader(http.StatusOK)
 		_, _ = w.Write([]byte("OK"))
 	})

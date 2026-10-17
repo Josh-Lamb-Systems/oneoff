@@ -6,8 +6,8 @@ version: 2
 before:
   hooks:
     - go mod download
-    - bun install --frozen-lockfile
-    - bun run build
+    - npm ci
+    - npm run build
 
 builds:
   - main: .
@@ -95,10 +95,10 @@ release:
     ## Docker Images
 
     ```bash
-    docker pull ghcr.io/meysam81/{{ .ProjectName }}:{{ .Version }}
+    docker pull ghcr.io/josh-lamb-systems/{{ .ProjectName }}:{{ .Version }}
     ```
 
-    **Full Changelog**: https://github.com/meysam81/{{ .ProjectName }}/compare/{{ .PreviousTag }}...{{ .Tag }}
+    **Full Changelog**: https://github.com/Josh-Lamb-Systems/{{ .ProjectName }}/compare/{{ .PreviousTag }}...{{ .Tag }}
 
 binary_signs:
   - cmd: cosign

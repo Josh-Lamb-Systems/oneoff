@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"os"
 	"os/signal"
-	"path/filepath"
 	"syscall"
 	"time"
 
@@ -137,16 +136,13 @@ func runMigrations(ctx context.Context, direction string) error {
 		Str("db_path", cfg.DBPath).
 		Msg("Running migrations")
 
-	// Get migrations path
-	migrationsPath := filepath.Join(".", "migrations")
-
 	// Validate direction
 	if direction != "up" && direction != "down" {
 		return fmt.Errorf("invalid migration direction: %s (must be 'up' or 'down')", direction)
 	}
 
 	// Run migrations
-	if err := repository.RunMigrations(ctx, cfg.DBPath, migrationsPath, direction); err != nil {
+	if err := repository.RunMigrations(ctx, cfg.DBPath, direction); err != nil {
 		return fmt.Errorf("migration failed: %w", err)
 	}
 

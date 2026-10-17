@@ -32,6 +32,11 @@ func NewSQLiteRepository(ctx context.Context, dbPath string) (*SQLiteRepository,
 	return &SQLiteRepository{db: db}, nil
 }
 
+// Ping verifies the database connection is usable
+func (r *SQLiteRepository) Ping(ctx context.Context) error {
+	return r.db.PingContext(ctx)
+}
+
 // Close closes the database connection
 func (r *SQLiteRepository) Close() error {
 	return r.db.Close()

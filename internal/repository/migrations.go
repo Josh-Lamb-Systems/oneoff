@@ -6,13 +6,14 @@ import (
 
 	"github.com/golang-migrate/migrate/v4"
 	"github.com/golang-migrate/migrate/v4/database/sqlite3"
-	_ "github.com/golang-migrate/migrate/v4/source/file"
+	"github.com/golang-migrate/migrate/v4/source/iofs"
 	"github.com/meysam81/oneoff/internal/logging"
+	"github.com/meysam81/oneoff/migrations"
 	"github.com/meysam81/x/sqlite"
 )
 
-// RunMigrations runs database migrations
-func RunMigrations(ctx context.Context, dbPath string, migrationsPath string, direction string) error {
+// RunMigrations runs the embedded database migrations
+func RunMigrations(ctx context.Context, dbPath string, direction string) error {
 	db, err := sqlite.NewDB(ctx, dbPath)
 	if err != nil {
 		return fmt.Errorf("failed to open database: %w", err)
@@ -24,11 +25,12 @@ func RunMigrations(ctx context.Context, dbPath string, migrationsPath string, di
 		return fmt.Errorf("failed to create migration driver: %w", err)
 	}
 
-	m, err := migrate.NewWithDatabaseInstance(
-		fmt.Sprintf("file://%s", migrationsPath),
-		sqlite.ENGINE,
-		driver,
-	)
+	source, err := iofs.New(migrations.FS, ".")
+	if err != nil {
+		return fmt.Errorf("failed to load embedded migrations: %w", err)
+	}
+
+	m, err := migrate.NewWithInstance("iofs", source, sqlite.ENGINE, driver)
 	if err != nil {
 		return fmt.Errorf("failed to create migration instance: %w", err)
 	}
