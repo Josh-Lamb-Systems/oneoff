@@ -1,0 +1,13 @@
+.git
+.github
+.goreleaser-dist
+node_modules
+internal/server/dist
+landing-page
+assets
+docs
+*.db
+*.db-shm
+*.db-wal
+.env
+oneoff

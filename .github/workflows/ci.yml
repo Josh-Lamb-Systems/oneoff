@@ -21,8 +21,11 @@ jobs:
         uses: actions/setup-go@v6
         with:
           go-version-file: go.mod
-      - name: Setup Bun
-        uses: oven-sh/setup-bun@v2
+      - name: Setup Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
       - name: Cache Go modules
         uses: actions/cache@v4
         with:
@@ -33,11 +36,9 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-go-
       - name: Install frontend dependencies
-        run: bun install
+        run: npm ci
       - name: Build frontend
-        run: bun run build
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: npm run build
       - name: golangci-lint
         uses: golangci/golangci-lint-action@v9
 
@@ -50,8 +51,11 @@ jobs:
         uses: actions/setup-go@v6
         with:
           go-version-file: go.mod
-      - name: Setup Bun
-        uses: oven-sh/setup-bun@v2
+      - name: Setup Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
       - name: Cache Go modules
         uses: actions/cache@v4
         with:
@@ -64,11 +68,9 @@ jobs:
       - name: Install dependencies
         run: |
           go mod download
-          bun install
+          npm ci
       - name: Build frontend
-        run: bun run build
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: npm run build
       - name: Run tests
         run: go test -v -race -coverprofile=coverage.out ./...
       - name: Upload coverage
@@ -89,8 +91,11 @@ jobs:
         uses: actions/setup-go@v6
         with:
           go-version-file: go.mod
-      - name: Setup Bun
-        uses: oven-sh/setup-bun@v2
+      - name: Setup Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
       - name: Cache Go modules
         uses: actions/cache@v4
         with:
@@ -103,11 +108,9 @@ jobs:
       - name: Install dependencies
         run: |
           go mod download
-          bun install
+          npm ci
       - name: Build frontend
-        run: bun run build
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: npm run build
       - name: Build backend
         run: |
           go build -ldflags="-s -w \
@@ -138,7 +141,63 @@ jobs:
         name: Release please
         uses: googleapis/release-please-action@v4
         with:
-          release-type: go
+          config-file: release-please-config.json
+          manifest-file: .release-please-manifest.json
+
+  docker:
+    needs: [checks, test, release-please]
+    # release-please is skipped on pull requests; build (without pushing) anyway
+    if: ${{ !cancelled() && needs.checks.result == 'success' && needs.test.result == 'success' }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    env:
+      RELEASED: ${{ needs.release-please.outputs.releases_created == 'true' }}
+      TAG_NAME: ${{ needs.release-please.outputs.tag_name }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+      - name: Setup QEMU
+        uses: docker/setup-qemu-action@v4
+      - name: Setup Buildx
+        uses: docker/setup-buildx-action@v4
+      - name: Login to GHCR
+        if: github.event_name != 'pull_request'
+        uses: docker/login-action@v4
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Image metadata
+        id: meta
+        uses: docker/metadata-action@v6
+        with:
+          images: ghcr.io/josh-lamb-systems/oneoff
+          flavor: |
+            latest=false
+          tags: |
+            type=ref,event=pr
+            type=edge,branch=main
+            type=sha,enable=${{ github.event_name != 'pull_request' }}
+            type=semver,pattern={{version}},value=${{ env.TAG_NAME }},enable=${{ env.RELEASED }}
+            type=semver,pattern={{major}}.{{minor}},value=${{ env.TAG_NAME }},enable=${{ env.RELEASED }}
+            type=semver,pattern={{major}},value=${{ env.TAG_NAME }},enable=${{ env.RELEASED }}
+            type=raw,value=latest,enable=${{ env.RELEASED }}
+      - name: Build and push
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          platforms: linux/amd64,linux/arm64
+          push: ${{ github.event_name != 'pull_request' }}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          build-args: |
+            VERSION=${{ env.RELEASED == 'true' && env.TAG_NAME || format('edge-{0}', github.sha) }}
+            COMMIT=${{ github.sha }}
+            BUILD_DATE=${{ github.event.head_commit.timestamp || github.event.pull_request.updated_at }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
 
   goreleaser:
     needs: release-please
@@ -160,8 +219,11 @@ jobs:
         uses: actions/setup-go@v6
         with:
           go-version-file: go.mod
-      - name: Setup Bun
-        uses: oven-sh/setup-bun@v2
+      - name: Setup Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
       - name: Cache Go modules
         uses: actions/cache@v4
         with:
@@ -192,117 +254,3 @@ jobs:
           args: release --release-notes CHANGELOG.md --clean
           distribution: goreleaser
           version: ~> v2
-
-  preview:
-    if: github.event_name == 'pull_request'
-    permissions:
-      contents: read
-      pull-requests: write
-    runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: ./landing-page
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v6
-      - name: Cache
-        uses: actions/cache@v4
-        with:
-          path: |
-            node_modules
-          key: node-modules-${{ runner.os }}-${{ hashFiles('**/bun.lock', '**/package-lock.json') }}
-          restore-keys: |
-            node-modules-${{ runner.os }}-
-      - name: Setup bun
-        uses: oven-sh/setup-bun@v2
-        with:
-          bun-version: latest
-      - name: Install bun deps
-        run: bun install
-      - name: Build
-        run: bun run build
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      - name: Upload Pages artifact
-        uses: actions/upload-pages-artifact@v3
-        with:
-          name: build-pr${{ github.event.pull_request.number }}-${{ github.run_id }}-${{ github.run_attempt }}
-          path: landing-page/dist
-      - name: Deploy to Netlify
-        id: netlify
-        run: |
-          bunx netlify-cli@v23 deploy \
-            --site "$NETLIFY_SITE_ID" \
-            --no-build \
-            --json \
-            --dir './dist' \
-            --message 'pr:${{ github.event.pull_request.number }} sha:${{ github.sha }}' \
-            | jq -r .deploy_url | tee deploy_url.txt
-          deploy_url="$(cat deploy_url.txt)"
-          echo "deploy_url=$deploy_url" >> "$GITHUB_OUTPUT"
-        env:
-          NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
-          NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}
-      - name: Comment PR
-        uses: meysam81/comment-pr@main
-        with:
-          title: "# Live preview"
-          content: |
-            The live preview of the changes are available at the following URL:
-            <${{ steps.netlify.outputs.deploy_url }}>
-          token: ${{ secrets.GITHUB_TOKEN }}
-      - name: Lychee
-        uses: lycheeverse/lychee-action@v2
-        with:
-          args: --verbose
-          fail: false
-        env:
-          GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
-
-  deploy-website:
-    if: github.ref == 'refs/heads/main'
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-    permissions:
-      contents: read
-      pages: write
-      id-token: write
-    defaults:
-      run:
-        working-directory: ./landing-page
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v6
-      - name: Cache
-        uses: actions/cache@v4
-        with:
-          path: |
-            node_modules
-          key: node-modules-${{ runner.os }}-${{ hashFiles('**/bun.lock', '**/package-lock.json') }}
-          restore-keys: |
-            node-modules-${{ runner.os }}-
-      - name: Setup bun
-        uses: oven-sh/setup-bun@v2
-        with:
-          bun-version: latest
-      - name: Setup Pages
-        uses: actions/configure-pages@v5
-      - name: Install bun deps
-        run: bun install
-      - name: Build
-        run: bun run build
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      - id: upload-artifact
-        name: Upload Pages artifact
-        uses: actions/upload-pages-artifact@v3
-        with:
-          name: github-actions-${{ github.run_id }}-${{ github.run_attempt }}
-          path: landing-page/dist
-      - id: deployment
-        name: Deploy to GitHub Pages
-        uses: actions/deploy-pages@v4
-        with:
-          artifact_name: github-actions-${{ github.run_id }}-${{ github.run_attempt }}
