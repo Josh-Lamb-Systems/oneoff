@@ -9,14 +9,18 @@
 </p>
 
 <p align="center">
+  <em>This is the <a href="https://github.com/Josh-Lamb-Systems/oneoff">Josh-Lamb-Systems fork</a> of <a href="https://github.com/meysam81/oneoff">meysam81/oneoff</a>, which publishes a container image and fixes packaging and reliability issues found upstream.</em>
+</p>
+
+<p align="center">
   Schedule HTTP requests, shell scripts, and Docker containers to run at specific times.<br>
   No Redis. No Postgres. No message queues. Just download and run.
 </p>
 
 <p align="center">
-  <a href="https://github.com/meysam81/oneoff/releases"><img src="https://img.shields.io/github/v/release/meysam81/oneoff?style=flat-square&color=6366F1" alt="Release"></a>
-  <a href="https://github.com/meysam81/oneoff/blob/main/LICENSE"><img src="https://img.shields.io/github/license/meysam81/oneoff?style=flat-square&color=10B981" alt="License"></a>
-  <a href="https://github.com/meysam81/oneoff/stargazers"><img src="https://img.shields.io/github/stars/meysam81/oneoff?style=flat-square&color=F59E0B" alt="Stars"></a>
+  <a href="https://github.com/Josh-Lamb-Systems/oneoff/releases"><img src="https://img.shields.io/github/v/release/Josh-Lamb-Systems/oneoff?style=flat-square&color=6366F1" alt="Release"></a>
+  <a href="https://github.com/Josh-Lamb-Systems/oneoff/blob/main/LICENSE"><img src="https://img.shields.io/github/license/Josh-Lamb-Systems/oneoff?style=flat-square&color=10B981" alt="License"></a>
+  <a href="https://github.com/Josh-Lamb-Systems/oneoff/stargazers"><img src="https://img.shields.io/github/stars/Josh-Lamb-Systems/oneoff?style=flat-square&color=F59E0B" alt="Stars"></a>
 </p>
 
 <p align="center">
@@ -51,7 +55,7 @@ That's it. Open `localhost:8080`, schedule your job, done.
 
 ```bash
 # Download (Linux)
-curl -fsSL https://github.com/meysam81/oneoff/releases/latest/download/oneoff_Linux_x86_64.tar.gz | tar xz
+curl -fsSL https://github.com/Josh-Lamb-Systems/oneoff/releases/latest/download/oneoff_linux_amd64.tar.gz | tar xz
 
 # Run
 ./oneoff
@@ -64,10 +68,10 @@ curl -fsSL https://github.com/meysam81/oneoff/releases/latest/download/oneoff_Li
 
 ```bash
 # Intel Mac
-curl -fsSL https://github.com/meysam81/oneoff/releases/latest/download/oneoff_Darwin_x86_64.tar.gz | tar xz
+curl -fsSL https://github.com/Josh-Lamb-Systems/oneoff/releases/latest/download/oneoff_darwin_amd64.tar.gz | tar xz
 
 # Apple Silicon
-curl -fsSL https://github.com/meysam81/oneoff/releases/latest/download/oneoff_Darwin_arm64.tar.gz | tar xz
+curl -fsSL https://github.com/Josh-Lamb-Systems/oneoff/releases/latest/download/oneoff_darwin_arm64.tar.gz | tar xz
 
 ./oneoff
 ```
@@ -77,7 +81,7 @@ curl -fsSL https://github.com/meysam81/oneoff/releases/latest/download/oneoff_Da
 <details>
 <summary><strong>Windows</strong></summary>
 
-Download from [Releases](https://github.com/meysam81/oneoff/releases), extract, and run:
+Download from [Releases](https://github.com/Josh-Lamb-Systems/oneoff/releases), extract, and run:
 
 ```powershell
 .\oneoff.exe
@@ -86,21 +90,41 @@ Download from [Releases](https://github.com/meysam81/oneoff/releases), extract, 
 </details>
 
 <details>
-<summary><strong>Docker</strong></summary>
+<summary><strong>Docker / Docker Compose</strong></summary>
+
+Multi-arch images (`linux/amd64`, `linux/arm64`) are published to GHCR:
+
+| Tag                      | Meaning                          |
+| ------------------------ | -------------------------------- |
+| `latest`, `1`, `1.2`, `1.2.0` | Tagged releases             |
+| `edge`                   | Latest commit on `main`          |
+| `sha-<commit>`           | A specific commit                |
 
 ```bash
-docker run -p 8080:8080 -v oneoff-data:/data ghcr.io/meysam81/oneoff:latest
+docker run -d -p 127.0.0.1:8080:8080 -v oneoff-data:/data ghcr.io/josh-lamb-systems/oneoff:latest
 ```
+
+Or use the [`compose.yaml`](compose.yaml) in this repo:
+
+```bash
+curl -fsSLO https://raw.githubusercontent.com/Josh-Lamb-Systems/oneoff/main/compose.yaml
+docker compose up -d
+```
+
+The image listens on `0.0.0.0:8080`, keeps its database at `/data/oneoff.db`,
+runs as UID 1000, and includes `bash`, `curl` and `jq` for shell jobs. Docker
+jobs are not supported in the image (it has no Docker CLI or socket). Shell
+jobs can run any command, so put the UI behind an authenticating reverse proxy.
 
 </details>
 
 <details>
 <summary><strong>Build from Source</strong></summary>
 
-Requires Go 1.23+ and Node.js 18+:
+Requires Go 1.25+ and Node.js 20.19+:
 
 ```bash
-git clone https://github.com/meysam81/oneoff.git
+git clone https://github.com/Josh-Lamb-Systems/oneoff.git
 cd oneoff
 make setup && make build
 ./oneoff
@@ -194,7 +218,7 @@ All configuration via environment variables. Zero config files.
 | Variable           | Default       | Description                         |
 | ------------------ | ------------- | ----------------------------------- |
 | `PORT`             | `8080`        | HTTP server port                    |
-| `HOST`             | `localhost`   | HTTP server host                    |
+| `HOST`             | `localhost`   | HTTP server host (`0.0.0.0` in the container image) |
 | `DB_PATH`          | `./oneoff.db` | SQLite database path                |
 | `WORKERS_COUNT`    | `0`           | Worker count (0 = CPU cores / 2)    |
 | `LOG_LEVEL`        | `info`        | Log level: debug, info, warn, error |
@@ -307,7 +331,7 @@ curl -X POST http://localhost:8080/api/jobs/{id}/cancel
 
 ```bash
 # Clone
-git clone https://github.com/meysam81/oneoff.git
+git clone https://github.com/Josh-Lamb-Systems/oneoff.git
 cd oneoff
 
 # Install dependencies
@@ -366,6 +390,6 @@ go fmt ./...
 
 <p align="center">
   <strong>Built for developers who value simplicity.</strong><br>
-  <a href="https://github.com/meysam81/oneoff">Star on GitHub</a> •
-  <a href="https://github.com/meysam81/oneoff/issues">Report Issue</a>
+  <a href="https://github.com/Josh-Lamb-Systems/oneoff">Star on GitHub</a> •
+  <a href="https://github.com/Josh-Lamb-Systems/oneoff/issues">Report Issue</a>
 </p>
