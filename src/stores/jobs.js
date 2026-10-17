@@ -27,8 +27,20 @@ export const useJobsStore = defineStore("jobs", () => {
     return CACHE_KEY_PREFIX + JSON.stringify(params);
   };
 
+  // Drop unset filters so they aren't sent as literal "null" or "" values
+  const compactParams = (params) =>
+    Object.fromEntries(
+      Object.entries(params).filter(
+        ([, value]) =>
+          value !== null &&
+          value !== undefined &&
+          value !== "" &&
+          !(Array.isArray(value) && value.length === 0),
+      ),
+    );
+
   const fetchJobs = async (params = {}, useCache = true) => {
-    const queryParams = { ...filter.value, ...params };
+    const queryParams = compactParams({ ...filter.value, ...params });
     const cacheKey = getCacheKey(queryParams);
 
     if (useCache) {
@@ -43,7 +55,7 @@ export const useJobsStore = defineStore("jobs", () => {
     loading.value = true;
     try {
       const response = await dedupe(cacheKey, () => jobsAPI.list(queryParams));
-      jobs.value = response.data;
+      jobs.value = response.data ?? [];
       total.value = response.total || 0;
       Cache.set(cacheKey, response, JOB_CACHE_TTL);
     } catch (error) {

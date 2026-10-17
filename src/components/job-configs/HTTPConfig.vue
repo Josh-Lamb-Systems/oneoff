@@ -95,12 +95,16 @@ var headersJson = ref("{}");
 
 initializeFromProps();
 
+var lastEmitted = "";
+
 watch(
   function watchModelValue() {
     return props.modelValue;
   },
   function onModelValueChange(newVal) {
-    if (newVal) {
+    // Ignore our own emits echoing back through the parent; re-initializing
+    // on those replaces config and emits again in an endless loop
+    if (newVal && JSON.stringify(newVal) !== lastEmitted) {
       initializeFromProps();
     }
   },
@@ -116,6 +120,7 @@ watch(headersJson, function onHeadersJsonChange(val) {
 watch(
   config,
   function onConfigChange(val) {
+    lastEmitted = JSON.stringify(val);
     emit("update:modelValue", val);
   },
   { deep: true },

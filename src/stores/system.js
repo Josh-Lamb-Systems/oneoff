@@ -74,7 +74,7 @@ export const useSystemStore = defineStore("system", () => {
 
     try {
       const response = await dedupe("fetchProjects", () => projectsAPI.list());
-      projects.value = response.data;
+      projects.value = response.data ?? [];
       Cache.set(CACHE_KEYS.PROJECTS, response.data, CACHE_TTL.STATIC);
     } catch (error) {
       console.error("Failed to fetch projects:", error);
@@ -92,7 +92,7 @@ export const useSystemStore = defineStore("system", () => {
 
     try {
       const response = await dedupe("fetchTags", () => tagsAPI.list());
-      tags.value = response.data;
+      tags.value = response.data ?? [];
       Cache.set(CACHE_KEYS.TAGS, response.data, CACHE_TTL.STATIC);
     } catch (error) {
       console.error("Failed to fetch tags:", error);
@@ -112,7 +112,7 @@ export const useSystemStore = defineStore("system", () => {
       const response = await dedupe("fetchJobTypes", () =>
         systemAPI.jobTypes(),
       );
-      jobTypes.value = response.data;
+      jobTypes.value = response.data ?? [];
       Cache.set(CACHE_KEYS.JOB_TYPES, response.data, CACHE_TTL.STATIC);
     } catch (error) {
       console.error("Failed to fetch job types:", error);
