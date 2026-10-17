@@ -3,6 +3,7 @@ package handler
 import (
 	"encoding/json"
 	"net/http"
+	"reflect"
 	"strconv"
 
 	"github.com/meysam81/oneoff/internal/logging"
@@ -65,16 +66,26 @@ func (h *Handler) respondError(w http.ResponseWriter, status int, message string
 }
 
 func (h *Handler) respondSuccess(w http.ResponseWriter, status int, data interface{}) {
-	h.respondJSON(w, status, successResponse{Data: data})
+	h.respondJSON(w, status, successResponse{Data: emptyIfNilSlice(data)})
 }
 
 func (h *Handler) respondList(w http.ResponseWriter, data interface{}, total int64, limit, offset int) {
 	h.respondJSON(w, http.StatusOK, listResponse{
-		Data:   data,
+		Data:   emptyIfNilSlice(data),
 		Total:  total,
 		Limit:  limit,
 		Offset: offset,
 	})
+}
+
+// emptyIfNilSlice makes nil slices encode as [] instead of null so clients
+// can always treat list responses as arrays
+func emptyIfNilSlice(data interface{}) interface{} {
+	v := reflect.ValueOf(data)
+	if v.Kind() == reflect.Slice && v.IsNil() {
+		return reflect.MakeSlice(v.Type(), 0, 0).Interface()
+	}
+	return data
 }
 
 // Helper to parse query parameters

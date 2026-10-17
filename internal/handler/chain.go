@@ -185,7 +185,7 @@ func respondListChains(w http.ResponseWriter, data interface{}, total int64, lim
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	_ = json.NewEncoder(w).Encode(map[string]interface{}{
-		"data":   data,
+		"data":   emptyIfNilSlice(data),
 		"total":  total,
 		"limit":  limit,
 		"offset": offset,
