@@ -459,6 +459,7 @@ The project uses several development tools:
 - Pull requests build the image without pushing
 - Alpine runtime with bash/curl/jq for shell jobs; no Docker CLI, so Docker jobs don't work in the image
 - `compose.yaml` is the reference deployment (behind a reverse proxy)
+- The Dockerfile has no `VOLUME` (Railway rejects it). `railway.toml` holds the Railway build and health-check config; Railway deployments need a Volume at `/data` plus `RAILWAY_RUN_UID=0`
 
 **Package manager**: npm (`package-lock.json`). bun is no longer used.
 

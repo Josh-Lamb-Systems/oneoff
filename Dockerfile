@@ -40,8 +40,10 @@ ENV HOST=0.0.0.0 \
     PORT=8080 \
     DB_PATH=/data/oneoff.db
 
+# /data holds the SQLite database. Mount a named volume there (Compose,
+# docker run) or attach a Railway Volume at /data. The image deliberately
+# doesn't declare a Docker volume, because Railway rejects Dockerfiles that do.
 WORKDIR /data
-VOLUME /data
 USER oneoff
 EXPOSE 8080
 
