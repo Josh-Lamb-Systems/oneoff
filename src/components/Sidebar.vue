@@ -19,7 +19,7 @@
 <script setup>
 import { computed, h } from "vue";
 import { useRouter, useRoute } from "vue-router";
-import { NIcon } from "naive-ui";
+import { NIcon, useThemeVars } from "naive-ui";
 import {
   HomeOutline,
   TimeOutline,
@@ -31,6 +31,8 @@ import {
 const props = defineProps({
   collapsed: Boolean,
 });
+
+const themeVars = useThemeVars();
 
 const router = useRouter();
 const route = useRoute();
@@ -89,7 +91,7 @@ const handleMenuSelect = (key) => {
   font-size: 20px;
   font-weight: 600;
   color: #6366f1;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.09);
+  border-bottom: 1px solid v-bind("themeVars.dividerColor");
   transition: all 0.3s;
 }
 

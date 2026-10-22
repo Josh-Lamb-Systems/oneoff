@@ -26,7 +26,28 @@
 
     <title>OneOff - Job Scheduler</title>
 
-    <!-- Inline critical CSS for instant dark mode -->
+    <!-- Apply saved theme before first paint (see src/composables/useTheme.js) -->
+    <script>
+      (function () {
+        var mode = "system";
+        try {
+          var stored = localStorage.getItem("oneoff_theme");
+          if (stored === "light" || stored === "dark") mode = stored;
+        } catch (e) {}
+        if (mode === "system") {
+          mode =
+            window.matchMedia &&
+            window.matchMedia("(prefers-color-scheme: dark)").matches
+              ? "dark"
+              : "light";
+        }
+        document.documentElement.dataset.theme = mode;
+        var meta = document.querySelector('meta[name="theme-color"]');
+        if (meta) meta.setAttribute("content", mode === "dark" ? "#18181c" : "#ffffff");
+      })();
+    </script>
+
+    <!-- Inline critical CSS for the theme background before the app loads -->
     <style>
       html,
       body {
@@ -34,6 +55,13 @@
         padding: 0;
         background-color: #18181c;
         color: #fff;
+        color-scheme: dark;
+      }
+      html[data-theme="light"],
+      html[data-theme="light"] body {
+        background-color: #fff;
+        color: #1f2225;
+        color-scheme: light;
       }
       #app {
         width: 100%;
