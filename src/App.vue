@@ -1,5 +1,6 @@
 <template>
-  <n-config-provider :theme="darkTheme" :hljs="hljs">
+  <n-config-provider :theme="naiveTheme" :hljs="hljs">
+    <n-global-style />
     <n-message-provider>
       <n-notification-provider>
         <n-dialog-provider>
@@ -48,16 +49,17 @@
 
 <script setup>
 import { ref, computed, onMounted, inject } from "vue";
-import { darkTheme } from "naive-ui";
 import { useRoute } from "vue-router";
 import { useSystemStore } from "./stores/system";
 import Sidebar from "./components/Sidebar.vue";
 import Header from "./components/Header.vue";
+import { useTheme } from "./composables/useTheme";
 
 const collapsed = ref(false);
 const route = useRoute();
 const systemStore = useSystemStore();
 var hljs = inject("hljs");
+const { naiveTheme } = useTheme();
 
 const isLoginPage = computed(() => route.path === "/login");
 

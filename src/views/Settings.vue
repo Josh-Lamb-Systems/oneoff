@@ -1,6 +1,14 @@
 <template>
   <div class="settings-container">
     <n-space vertical :size="20">
+      <!-- Appearance (stored per browser, not in server config) -->
+      <n-card title="Appearance">
+        <n-space align="center">
+          <span>Theme</span>
+          <ThemeToggle show-label />
+        </n-space>
+      </n-card>
+
       <!-- System Information -->
       <n-card title="System Information">
         <n-spin :show="loading">
@@ -119,6 +127,7 @@ import { useMessage } from "naive-ui";
 import { NTag } from "naive-ui";
 import { systemAPI } from "../utils/api";
 import { useSystemStore } from "../stores/system";
+import ThemeToggle from "../components/ThemeToggle.vue";
 
 const message = useMessage();
 const systemStore = useSystemStore();

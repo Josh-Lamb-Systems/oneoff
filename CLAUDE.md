@@ -153,7 +153,15 @@ App.vue (root layout)
 - **jobs.js**: Job list, current job, filters, CRUD operations
 - **system.js**: System stats, worker status, configuration
 
-#### 3. API Client Architecture
+#### 3. Color Modes
+
+- `useTheme()` (`src/composables/useTheme.js`) holds the shared mode: `system` (default), `light` or `dark`
+- The choice is saved per browser in localStorage under `oneoff_theme`. Keep it outside the `oneoff_cache_` prefix, because `Cache.clear()` and `invalidateJobsCache()` delete those keys
+- In `system` mode a `prefers-color-scheme` listener updates the UI live
+- `App.vue` passes `naiveTheme` (`darkTheme` or `null` for light) to `n-config-provider`. Use `useThemeVars()` instead of hard-coded light or dark colours
+- An inline script in `index.html` reads the same key before mount to avoid a wrong-theme flash
+
+#### 4. API Client Architecture
 
 ```javascript
 // Centralized API client with retry logic
@@ -247,6 +255,7 @@ src/
 │   ├── Header.vue
 │   ├── JobsTable.vue
 │   ├── Sidebar.vue
+│   ├── ThemeToggle.vue # Light/Dark/System cycle button (header + Settings)
 │   └── job-configs/    # Job type-specific config forms
 │       ├── DockerConfig.vue
 │       ├── HTTPConfig.vue
@@ -263,6 +272,9 @@ src/
 ├── stores/             # Pinia state management
 │   ├── jobs.js         # Job state and operations
 │   └── system.js       # System state and config
+│
+├── composables/        # Shared composition functions
+│   └── useTheme.js     # Color mode (system/light/dark) singleton
 │
 ├── utils/              # Utility functions
 │   ├── api.js          # API client factory

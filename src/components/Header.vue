@@ -6,6 +6,8 @@
 
     <div class="header-right">
       <n-space>
+        <ThemeToggle />
+
         <n-badge :value="stats?.queue_depth || 0" :max="99" show-zero>
           <n-button text @click="refreshData">
             <template #icon>
@@ -46,6 +48,7 @@ import { useRoute } from "vue-router";
 import { RefreshOutline, ServerOutline } from "@vicons/ionicons5";
 import { useSystemStore } from "../stores/system";
 import { useJobsStore } from "../stores/jobs";
+import ThemeToggle from "./ThemeToggle.vue";
 
 const route = useRoute();
 const systemStore = useSystemStore();
