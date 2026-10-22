@@ -1,5 +1,23 @@
 # Changelog
 
+## [1.2.0](https://github.com/Josh-Lamb-Systems/oneoff/compare/v1.1.1...v1.2.0) (2026-10-22)
+
+
+### Features
+
+* publish a container image to GHCR and add a compose example ([fd0869a](https://github.com/Josh-Lamb-Systems/oneoff/commit/fd0869ae328431ad7c0d3540a4df510016d5d7bd))
+* **ui:** add light, dark and system color modes ([7a0b982](https://github.com/Josh-Lamb-Systems/oneoff/commit/7a0b9828949ef4ae352a10d9df9b1d567b20b57c))
+* **ui:** add light, dark and system color modes ([fa9ba55](https://github.com/Josh-Lamb-Systems/oneoff/commit/fa9ba553938b282fba8a7dd599233ab4caeb72f0)), closes [#4](https://github.com/Josh-Lamb-Systems/oneoff/issues/4)
+
+
+### Bug Fixes
+
+* **docker:** drop VOLUME so the image builds on Railway ([4607fd4](https://github.com/Josh-Lamb-Systems/oneoff/commit/4607fd48a1b44d2c2fcbbcfe5a9337afb37880bc))
+* **docker:** drop VOLUME so the image builds on Railway ([3395a4f](https://github.com/Josh-Lamb-Systems/oneoff/commit/3395a4fe3dc924531efa2a42332de6eb66f5d01c)), closes [#6](https://github.com/Josh-Lamb-Systems/oneoff/issues/6)
+* embed migrations in the binary and fail fast on errors ([28201f9](https://github.com/Josh-Lamb-Systems/oneoff/commit/28201f96e1242ca2c5d3745450b6c4e179faf12f))
+* encode empty list responses as [] instead of null ([3ab84ec](https://github.com/Josh-Lamb-Systems/oneoff/commit/3ab84ec467c4aab0140da7ed28b3867cf2958f0f))
+* **ui:** make the UI work off localhost and fix the job config forms ([d46a00d](https://github.com/Josh-Lamb-Systems/oneoff/commit/d46a00d05e5b733ba78ff9a173eb0f866d033913))
+
 ## [1.1.1](https://github.com/meysam81/oneoff/compare/v1.1.0...v1.1.1) (2025-11-30)
 
 
