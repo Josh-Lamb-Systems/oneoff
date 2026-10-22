@@ -119,6 +119,36 @@ jobs can run any command, so put the UI behind an authenticating reverse proxy.
 </details>
 
 <details>
+<summary><strong>Railway</strong></summary>
+
+The repo includes a [`railway.toml`](railway.toml) that builds the `Dockerfile`
+and health-checks `/health`.
+
+1. In your Railway project, choose **New → GitHub Repo** and pick this repo
+   (or your fork). Railway picks up `railway.toml` and builds the `Dockerfile`.
+2. **Add a Volume** to the service with mount path **`/data`**. Without it,
+   every redeploy wipes all jobs and execution history. If you mount it
+   somewhere else, set `DB_PATH=<mount>/oneoff.db`.
+3. **Variables:** set `RAILWAY_RUN_UID=0`. Railway mounts volumes owned by
+   root, and the image runs as UID 1000, which otherwise can't create the
+   SQLite file. Optional: `LOG_LEVEL`, `DEFAULT_TIMEZONE`, `WORKERS_COUNT`.
+   Don't set `PORT` (Railway injects it and OneOff reads it) or `HOST` (the
+   image already sets `0.0.0.0`).
+4. **Networking:** see the warning below before you generate a public domain.
+5. HTTP and shell jobs work. Docker jobs don't, as with the image.
+
+> [!WARNING]
+> OneOff has no working login yet, and anyone who can reach it can run shell
+> commands in the container. Either skip the public domain and reach it over
+> Railway private networking (for example `railway connect`), or put an
+> authenticating proxy in front, such as a Caddy service with `basic_auth`
+> forwarding to `oneoff.railway.internal:$PORT`. Don't rely on
+> `AUTH_ENABLED`: it currently breaks the UI and has no way to create the
+> first API key.
+
+</details>
+
+<details>
 <summary><strong>Build from Source</strong></summary>
 
 Requires Go 1.25+ and Node.js 20.19+:
